@@ -2,6 +2,7 @@ package no.fint.consumer.config;
 
 import com.google.common.collect.ImmutableMap;
 import no.fint.consumer.utils.RestEndpoints;
+import no.fint.model.administrasjon.arkiv.Journalpost;
 import no.fint.model.kultur.kulturminnevern.DispensasjonAutomatiskFredaKulturminne;
 import no.fint.model.kultur.kulturminnevern.TilskuddFartoy;
 import no.fint.model.kultur.kulturminnevern.TilskuddFredaHusPrivatEie;
@@ -15,6 +16,7 @@ public class LinkMapper {
                 .put(DispensasjonAutomatiskFredaKulturminne.class.getName(), contextPath + RestEndpoints.DISPENSASJONAUTOMATISKFREDAKULTURMINNE)
                 .put(TilskuddFartoy.class.getName(), contextPath + RestEndpoints.TILSKUDDFARTOY)
                 .put(TilskuddFredaHusPrivatEie.class.getName(), contextPath + RestEndpoints.TILSKUDDFREDAHUSPRIVATEIE)
+                .put(Journalpost.class.getName(), "/administrasjon/arkiv/journalpost")
                 /* .put(TODO,TODO) */
                 .build();
     }

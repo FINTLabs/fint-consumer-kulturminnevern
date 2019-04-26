@@ -65,7 +65,7 @@ public class TilskuddFredaHusPrivatEieCacheService extends CacheService<Tilskudd
         props.getAssets().forEach(this::createCache);
     }
 
-    @Scheduled(initialDelayString = Constants.CACHE_INITIALDELAY_TILSKUDDFREDAHUSPRIVATEIE, fixedRateString = Constants.CACHE_FIXEDRATE_TILSKUDDFREDAHUSPRIVATEIE)
+    //@Scheduled(initialDelayString = Constants.CACHE_INITIALDELAY_TILSKUDDFREDAHUSPRIVATEIE, fixedRateString = Constants.CACHE_FIXEDRATE_TILSKUDDFREDAHUSPRIVATEIE)
     public void populateCacheAll() {
         props.getAssets().forEach(this::populateCache);
     }

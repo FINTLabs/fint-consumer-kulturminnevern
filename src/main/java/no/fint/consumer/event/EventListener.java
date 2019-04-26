@@ -26,9 +26,9 @@ public class EventListener implements FintEventListener {
 
     @Autowired(required = false)
     private List<CacheService> cacheServices;
-    
-	@Autowired
-	private FintEvents fintEvents;
+
+    @Autowired
+    private FintEvents fintEvents;
 
     @Autowired
     private FintAuditService fintAuditService;
@@ -44,14 +44,14 @@ public class EventListener implements FintEventListener {
         fintEvents.registerUpstreamSystemListener(this);
         if (cacheServices == null)
             cacheServices = Collections.emptyList();
-    	for (String orgId : props.getAssets()) {
-    		fintEvents.registerUpstreamListener(orgId, this);
-    	}
-    	log.info("Upstream listeners registered.");
+        for (String orgId : props.getAssets()) {
+            fintEvents.registerUpstreamListener(orgId, this);
+        }
+        log.info("Upstream listeners registered.");
     }
 
-	@Override
-	public void accept(Event event) {
+    @Override
+    public void accept(Event event) {
         log.debug("Received event: {}", event);
         log.trace("Event data: {}", event.getData());
         if (event.isRegisterOrgId()) {
@@ -72,6 +72,12 @@ public class EventListener implements FintEventListener {
             log.debug("Ignoring validation event.");
             return;
         }
+
+        if (event.getOperation() == Operation.READ) {
+            log.info("Ignoring read event");
+            return;
+        }
+
         if (event.getResponseStatus() == ResponseStatus.REJECTED || event.getResponseStatus() == ResponseStatus.ERROR) {
             log.debug("Ignoring response status {}", event.getResponseStatus());
             return;
@@ -93,5 +99,5 @@ public class EventListener implements FintEventListener {
             log.warn("Unhandled event: {}", event);
         }
     }
-	
+
 }

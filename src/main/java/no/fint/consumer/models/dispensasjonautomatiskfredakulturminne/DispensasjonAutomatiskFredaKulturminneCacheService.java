@@ -65,7 +65,7 @@ public class DispensasjonAutomatiskFredaKulturminneCacheService extends CacheSer
         props.getAssets().forEach(this::createCache);
     }
 
-    @Scheduled(initialDelayString = Constants.CACHE_INITIALDELAY_DISPENSASJONAUTOMATISKFREDAKULTURMINNE, fixedRateString = Constants.CACHE_FIXEDRATE_DISPENSASJONAUTOMATISKFREDAKULTURMINNE)
+    //@Scheduled(initialDelayString = Constants.CACHE_INITIALDELAY_DISPENSASJONAUTOMATISKFREDAKULTURMINNE, fixedRateString = Constants.CACHE_FIXEDRATE_DISPENSASJONAUTOMATISKFREDAKULTURMINNE)
     public void populateCacheAll() {
         props.getAssets().forEach(this::populateCache);
     }

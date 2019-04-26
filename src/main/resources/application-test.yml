@@ -4,7 +4,7 @@ spring:
 
 fint:
  events:
-  orgIds: mock.no
+  orgIds: ra.no
   test-mode: true
   queue-endpoint-enabled: true
 

@@ -65,7 +65,7 @@ public class TilskuddFartoyCacheService extends CacheService<TilskuddFartoyResou
         props.getAssets().forEach(this::createCache);
     }
 
-    @Scheduled(initialDelayString = Constants.CACHE_INITIALDELAY_TILSKUDDFARTOY, fixedRateString = Constants.CACHE_FIXEDRATE_TILSKUDDFARTOY)
+    //@Scheduled(initialDelayString = Constants.CACHE_INITIALDELAY_TILSKUDDFARTOY, fixedRateString = Constants.CACHE_FIXEDRATE_TILSKUDDFARTOY)
     public void populateCacheAll() {
         props.getAssets().forEach(this::populateCache);
     }

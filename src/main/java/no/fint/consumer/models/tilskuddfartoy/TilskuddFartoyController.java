@@ -2,23 +2,23 @@ package no.fint.consumer.models.tilskuddfartoy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.common.collect.ImmutableMap;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
-
 import no.fint.audit.FintAuditService;
-
 import no.fint.consumer.config.Constants;
 import no.fint.consumer.config.ConsumerProps;
 import no.fint.consumer.event.ConsumerEventUtil;
-import no.fint.consumer.exceptions.*;
+import no.fint.consumer.exceptions.CreateEntityMismatchException;
+import no.fint.consumer.exceptions.EntityFoundException;
+import no.fint.consumer.exceptions.EntityNotFoundException;
+import no.fint.consumer.exceptions.UpdateEntityMismatchException;
 import no.fint.consumer.status.StatusCache;
+import no.fint.consumer.utils.QueryUtils;
 import no.fint.consumer.utils.RestEndpoints;
-
 import no.fint.event.model.*;
-
+import no.fint.model.kultur.kulturminnevern.KulturminnevernActions;
+import no.fint.model.resource.kultur.kulturminnevern.TilskuddFartoyResource;
 import no.fint.relations.FintRelationsMediaType;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,19 +26,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.UnknownHostException;
+import javax.naming.NameNotFoundException;
+import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
-
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.naming.NameNotFoundException;
-
-import no.fint.model.resource.kultur.kulturminnevern.TilskuddFartoyResource;
-import no.fint.model.resource.kultur.kulturminnevern.TilskuddFartoyResources;
-import no.fint.model.kultur.kulturminnevern.KulturminnevernActions;
-
+@SuppressWarnings("Duplicates")
 @Slf4j
 @Api(tags = {"TilskuddFartoy"})
 @CrossOrigin
@@ -67,6 +63,10 @@ public class TilskuddFartoyController {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private TilskuddFartoySynchronousService tilskuddFartoySynchronousService;
+
+    /*
     @GetMapping("/last-updated")
     public Map<String, String> getLastUpdated(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
         if (props.isOverrideOrgId() || orgId == null) {
@@ -92,34 +92,24 @@ public class TilskuddFartoyController {
         cacheService.rebuildCache(orgId);
     }
 
+    */
+
     @GetMapping
-    public TilskuddFartoyResources getTilskuddFartoy(
+    public ResponseEntity getTilskuddFartoy(
             @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
             @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client,
-            @RequestParam(required = false) Long sinceTimeStamp) {
+            @RequestParam(required = true) String title,
+            @RequestParam(required = false, defaultValue = "10") int maxResult,
+            HttpServletRequest request) {
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
         }
         if (client == null) {
             client = props.getDefaultClient();
         }
-        log.debug("OrgId: {}, Client: {}", orgId, client);
+        log.debug("Title: {}, PageSize: {}, OrgId: {}, Client: {}", title, maxResult, orgId, client);
 
-        Event event = new Event(orgId, Constants.COMPONENT, KulturminnevernActions.GET_ALL_TILSKUDDFARTOY, client);
-        fintAuditService.audit(event);
-
-        fintAuditService.audit(event, Status.CACHE);
-
-        List<TilskuddFartoyResource> tilskuddfartoy;
-        if (sinceTimeStamp == null) {
-            tilskuddfartoy = cacheService.getAll(orgId);
-        } else {
-            tilskuddfartoy = cacheService.getAll(orgId, sinceTimeStamp);
-        }
-
-        fintAuditService.audit(event, Status.CACHE_RESPONSE, Status.SENT_TO_CLIENT);
-
-        return linker.toResources(tilskuddfartoy);
+        return tilskuddFartoySynchronousService.searchTilskuddFartoyByTitle(QueryUtils.createQuery(request.getQueryString()), orgId, client);
     }
 
 
@@ -149,34 +139,41 @@ public class TilskuddFartoyController {
         return tilskuddfartoy.map(linker::toResource).orElseThrow(() -> new EntityNotFoundException(id));
     }
 
-    @GetMapping("/mappeid/{id:.+}")
-    public TilskuddFartoyResource getTilskuddFartoyByMappeId(
-            @PathVariable String id,
+    @GetMapping("/mappeid/{ar}/{sekvensnummer}")
+    public ResponseEntity getTilskuddFartoyByMappeId(
+            @PathVariable String ar,
+            @PathVariable String sekvensnummer,
             @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
             @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client) {
+
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
         }
         if (client == null) {
             client = props.getDefaultClient();
         }
-        log.debug("MappeId: {}, OrgId: {}, Client: {}", id, orgId, client);
+        log.debug("MappeId: {}/{}, OrgId: {}, Client: {}", ar, sekvensnummer, orgId, client);
 
-        Event event = new Event(orgId, Constants.COMPONENT, KulturminnevernActions.GET_TILSKUDDFARTOY, client);
-        event.setQuery("mappeid/" + id);
-        fintAuditService.audit(event);
-
-        fintAuditService.audit(event, Status.CACHE);
-
-        Optional<TilskuddFartoyResource> tilskuddfartoy = cacheService.getTilskuddFartoyByMappeId(orgId, id);
-
-        fintAuditService.audit(event, Status.CACHE_RESPONSE, Status.SENT_TO_CLIENT);
-
-        return tilskuddfartoy.map(linker::toResource).orElseThrow(() -> new EntityNotFoundException(id));
+        return tilskuddFartoySynchronousService.getTilskuddFartoy(String.format("mappeid/%s/%s", ar, sekvensnummer), orgId, client);
     }
 
+    /*
+    @GetMapping("/mappeid/{ar}/{sekvensnummer}/registrering/systemid/{id}")
+    public ResponseEntity getTilskuddFartoyByMappeId(
+            @PathVariable String ar,
+            @PathVariable String sekvensnummer,
+            @PathVariable String id,
+            @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
+            @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client) {
+
+        return tilskuddFartoySynchronousService.getRegistrering(id, orgId, client);
+    }
+    */
+
+
+
     @GetMapping("/systemid/{id:.+}")
-    public TilskuddFartoyResource getTilskuddFartoyBySystemId(
+    public ResponseEntity getTilskuddFartoyBySystemId(
             @PathVariable String id,
             @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
             @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client) {
@@ -188,19 +185,8 @@ public class TilskuddFartoyController {
         }
         log.debug("SystemId: {}, OrgId: {}, Client: {}", id, orgId, client);
 
-        Event event = new Event(orgId, Constants.COMPONENT, KulturminnevernActions.GET_TILSKUDDFARTOY, client);
-        event.setQuery("systemid/" + id);
-        fintAuditService.audit(event);
-
-        fintAuditService.audit(event, Status.CACHE);
-
-        Optional<TilskuddFartoyResource> tilskuddfartoy = cacheService.getTilskuddFartoyBySystemId(orgId, id);
-
-        fintAuditService.audit(event, Status.CACHE_RESPONSE, Status.SENT_TO_CLIENT);
-
-        return tilskuddfartoy.map(linker::toResource).orElseThrow(() -> new EntityNotFoundException(id));
+        return tilskuddFartoySynchronousService.getTilskuddFartoy(String.format("systemid/%s", id), orgId, client);
     }
-
 
 
     @GetMapping("/status/{id}")
@@ -216,7 +202,11 @@ public class TilskuddFartoyController {
         log.debug("Event: {}", event);
         log.trace("Data: {}", event.getData());
         if (!event.getOrgId().equals(orgId)) {
-            return ResponseEntity.badRequest().body(new EventResponse() { { setMessage("Invalid OrgId"); } } );
+            return ResponseEntity.badRequest().body(new EventResponse() {
+                {
+                    setMessage("Invalid OrgId");
+                }
+            });
         }
         if (event.getResponseStatus() == null) {
             return ResponseEntity.status(HttpStatus.ACCEPTED).build();
@@ -251,19 +241,16 @@ public class TilskuddFartoyController {
     public ResponseEntity postTilskuddFartoy(
             @RequestHeader(name = HeaderConstants.ORG_ID) String orgId,
             @RequestHeader(name = HeaderConstants.CLIENT) String client,
-            @RequestBody TilskuddFartoyResource body,
-            @RequestParam(name = "validate", required = false) boolean validate
+            @RequestBody TilskuddFartoyResource body
+            //@RequestParam(name = "validate", required = false) boolean validate
     ) {
-        log.debug("postTilskuddFartoy, Validate: {}, OrgId: {}, Client: {}", validate, orgId, client);
+        log.debug("postTilskuddFartoy, OrgId: {}, Client: {}", orgId, client);
         log.trace("Body: {}", body);
         linker.mapLinks(body);
         Event event = new Event(orgId, Constants.COMPONENT, KulturminnevernActions.UPDATE_TILSKUDDFARTOY, client);
         event.addObject(objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS).convertValue(body, Map.class));
         event.setOperation(Operation.CREATE);
-        if (validate) {
-            event.setQuery("VALIDATE");
-            event.setOperation(Operation.VALIDATE);
-        }
+
         fintAuditService.audit(event);
 
         consumerEventUtil.send(event);
@@ -274,7 +261,7 @@ public class TilskuddFartoyController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).location(location).build();
     }
 
-  
+
     @PutMapping("/soknadsnummer/{id:.+}")
     public ResponseEntity putTilskuddFartoyBySoknadsnummer(
             @PathVariable String id,
@@ -298,7 +285,7 @@ public class TilskuddFartoyController {
         URI location = UriComponentsBuilder.fromUriString(linker.self()).path("status/{id}").buildAndExpand(event.getCorrId()).toUri();
         return ResponseEntity.status(HttpStatus.ACCEPTED).location(location).build();
     }
-  
+
     @PutMapping("/mappeid/{id:.+}")
     public ResponseEntity putTilskuddFartoyByMappeId(
             @PathVariable String id,
@@ -322,7 +309,7 @@ public class TilskuddFartoyController {
         URI location = UriComponentsBuilder.fromUriString(linker.self()).path("status/{id}").buildAndExpand(event.getCorrId()).toUri();
         return ResponseEntity.status(HttpStatus.ACCEPTED).location(location).build();
     }
-  
+
     @PutMapping("/systemid/{id:.+}")
     public ResponseEntity putTilskuddFartoyBySystemId(
             @PathVariable String id,
@@ -346,7 +333,7 @@ public class TilskuddFartoyController {
         URI location = UriComponentsBuilder.fromUriString(linker.self()).path("status/{id}").buildAndExpand(event.getCorrId()).toUri();
         return ResponseEntity.status(HttpStatus.ACCEPTED).location(location).build();
     }
-  
+
 
     //
     // Exception handlers

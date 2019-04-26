@@ -35,6 +35,20 @@ public class ConsumerEventUtil {
         }
     }
 
+    public Optional<Event> sendSync(Event event) {
+        fintAuditService.audit(event);
+        fintAuditService.audit(event, Status.DOWNSTREAM_QUEUE);
+        log.debug("Sending syncron event {} to {}", event.getAction(), event.getOrgId());
+        Event response = fintEvents.sendSyncEvent(event);
+        if (response == null) {
+            fintAuditService.audit(event, Status.NO_RESPONSE_FROM_ADAPTER, Status.SENT_TO_CLIENT);
+            return Optional.empty();
+        } else {
+            fintAuditService.audit(response, Status.SENT_TO_CLIENT);
+            return Optional.of(response);
+        }
+    }
+
     public void send(Event event) {
         fintAuditService.audit(event);
         fintAuditService.audit(event, Status.DOWNSTREAM_QUEUE);

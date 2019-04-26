@@ -11,8 +11,10 @@ import no.fint.audit.FintAuditService;
 import no.fint.consumer.config.Constants;
 import no.fint.consumer.config.ConsumerProps;
 import no.fint.consumer.event.ConsumerEventUtil;
+import no.fint.consumer.event.SynchronousEvents;
 import no.fint.consumer.exceptions.*;
 import no.fint.consumer.status.StatusCache;
+import no.fint.consumer.utils.EventResponses;
 import no.fint.consumer.utils.RestEndpoints;
 
 import no.fint.event.model.*;
@@ -32,8 +34,8 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import javax.naming.NameNotFoundException;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import no.fint.model.resource.kultur.kulturminnevern.DispensasjonAutomatiskFredaKulturminneResource;
 import no.fint.model.resource.kultur.kulturminnevern.DispensasjonAutomatiskFredaKulturminneResources;
@@ -46,7 +48,7 @@ import no.fint.model.kultur.kulturminnevern.KulturminnevernActions;
 @RequestMapping(name = "DispensasjonAutomatiskFredaKulturminne", value = RestEndpoints.DISPENSASJONAUTOMATISKFREDAKULTURMINNE, produces = {FintRelationsMediaType.APPLICATION_HAL_JSON_VALUE, MediaType.APPLICATION_JSON_UTF8_VALUE})
 public class DispensasjonAutomatiskFredaKulturminneController {
 
-    @Autowired
+    @Autowired(required = false)
     private DispensasjonAutomatiskFredaKulturminneCacheService cacheService;
 
     @Autowired
@@ -67,8 +69,14 @@ public class DispensasjonAutomatiskFredaKulturminneController {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private SynchronousEvents synchronousEvents;
+
     @GetMapping("/last-updated")
     public Map<String, String> getLastUpdated(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
+        if (cacheService == null) {
+            throw new CacheDisabledException("DispensasjonAutomatiskFredaKulturminne cache is disabled.");
+        }
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
         }
@@ -78,6 +86,9 @@ public class DispensasjonAutomatiskFredaKulturminneController {
 
     @GetMapping("/cache/size")
      public ImmutableMap<String, Integer> getCacheSize(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
+        if (cacheService == null) {
+            throw new CacheDisabledException("DispensasjonAutomatiskFredaKulturminne cache is disabled.");
+        }
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
         }
@@ -86,6 +97,9 @@ public class DispensasjonAutomatiskFredaKulturminneController {
 
     @PostMapping("/cache/rebuild")
     public void rebuildCache(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
+        if (cacheService == null) {
+            throw new CacheDisabledException("DispensasjonAutomatiskFredaKulturminne cache is disabled.");
+        }
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
         }
@@ -97,6 +111,9 @@ public class DispensasjonAutomatiskFredaKulturminneController {
             @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
             @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client,
             @RequestParam(required = false) Long sinceTimeStamp) {
+        if (cacheService == null) {
+            throw new CacheDisabledException("DispensasjonAutomatiskFredaKulturminne cache is disabled.");
+        }
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
         }
@@ -107,7 +124,6 @@ public class DispensasjonAutomatiskFredaKulturminneController {
 
         Event event = new Event(orgId, Constants.COMPONENT, KulturminnevernActions.GET_ALL_DISPENSASJONAUTOMATISKFREDAKULTURMINNE, client);
         fintAuditService.audit(event);
-
         fintAuditService.audit(event, Status.CACHE);
 
         List<DispensasjonAutomatiskFredaKulturminneResource> dispensasjonautomatiskfredakulturminne;
@@ -127,78 +143,129 @@ public class DispensasjonAutomatiskFredaKulturminneController {
     public DispensasjonAutomatiskFredaKulturminneResource getDispensasjonAutomatiskFredaKulturminneBySoknadsnummer(
             @PathVariable String id,
             @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
-            @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client) {
+            @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client) throws InterruptedException {
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
         }
         if (client == null) {
             client = props.getDefaultClient();
         }
-        log.debug("Soknadsnummer: {}, OrgId: {}, Client: {}", id, orgId, client);
+        log.debug("soknadsnummer: {}, OrgId: {}, Client: {}", id, orgId, client);
 
         Event event = new Event(orgId, Constants.COMPONENT, KulturminnevernActions.GET_DISPENSASJONAUTOMATISKFREDAKULTURMINNE, client);
         event.setQuery("soknadsnummer/" + id);
-        fintAuditService.audit(event);
 
-        fintAuditService.audit(event, Status.CACHE);
+        if (cacheService != null) {
+            fintAuditService.audit(event);
+            fintAuditService.audit(event, Status.CACHE);
 
-        Optional<DispensasjonAutomatiskFredaKulturminneResource> dispensasjonautomatiskfredakulturminne = cacheService.getDispensasjonAutomatiskFredaKulturminneBySoknadsnummer(orgId, id);
+            Optional<DispensasjonAutomatiskFredaKulturminneResource> dispensasjonautomatiskfredakulturminne = cacheService.getDispensasjonAutomatiskFredaKulturminneBySoknadsnummer(orgId, id);
 
-        fintAuditService.audit(event, Status.CACHE_RESPONSE, Status.SENT_TO_CLIENT);
+            fintAuditService.audit(event, Status.CACHE_RESPONSE, Status.SENT_TO_CLIENT);
 
-        return dispensasjonautomatiskfredakulturminne.map(linker::toResource).orElseThrow(() -> new EntityNotFoundException(id));
+            return dispensasjonautomatiskfredakulturminne.map(linker::toResource).orElseThrow(() -> new EntityNotFoundException(id));
+
+        } else {
+            BlockingQueue<Event> queue = synchronousEvents.register(event);
+            consumerEventUtil.send(event);
+
+            Event response = EventResponses.handle(queue.poll(5, TimeUnit.MINUTES));
+
+            if (response.getData() == null ||
+                    response.getData().isEmpty()) throw new EntityNotFoundException(id);
+
+            DispensasjonAutomatiskFredaKulturminneResource dispensasjonautomatiskfredakulturminne = objectMapper.convertValue(response.getData().get(0), DispensasjonAutomatiskFredaKulturminneResource.class);
+
+            fintAuditService.audit(response, Status.SENT_TO_CLIENT);
+
+            return linker.toResource(dispensasjonautomatiskfredakulturminne);
+        }    
     }
 
     @GetMapping("/mappeid/{id:.+}")
     public DispensasjonAutomatiskFredaKulturminneResource getDispensasjonAutomatiskFredaKulturminneByMappeId(
             @PathVariable String id,
             @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
-            @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client) {
+            @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client) throws InterruptedException {
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
         }
         if (client == null) {
             client = props.getDefaultClient();
         }
-        log.debug("MappeId: {}, OrgId: {}, Client: {}", id, orgId, client);
+        log.debug("mappeId: {}, OrgId: {}, Client: {}", id, orgId, client);
 
         Event event = new Event(orgId, Constants.COMPONENT, KulturminnevernActions.GET_DISPENSASJONAUTOMATISKFREDAKULTURMINNE, client);
-        event.setQuery("mappeid/" + id);
-        fintAuditService.audit(event);
+        event.setQuery("mappeId/" + id);
 
-        fintAuditService.audit(event, Status.CACHE);
+        if (cacheService != null) {
+            fintAuditService.audit(event);
+            fintAuditService.audit(event, Status.CACHE);
 
-        Optional<DispensasjonAutomatiskFredaKulturminneResource> dispensasjonautomatiskfredakulturminne = cacheService.getDispensasjonAutomatiskFredaKulturminneByMappeId(orgId, id);
+            Optional<DispensasjonAutomatiskFredaKulturminneResource> dispensasjonautomatiskfredakulturminne = cacheService.getDispensasjonAutomatiskFredaKulturminneByMappeId(orgId, id);
 
-        fintAuditService.audit(event, Status.CACHE_RESPONSE, Status.SENT_TO_CLIENT);
+            fintAuditService.audit(event, Status.CACHE_RESPONSE, Status.SENT_TO_CLIENT);
 
-        return dispensasjonautomatiskfredakulturminne.map(linker::toResource).orElseThrow(() -> new EntityNotFoundException(id));
+            return dispensasjonautomatiskfredakulturminne.map(linker::toResource).orElseThrow(() -> new EntityNotFoundException(id));
+
+        } else {
+            BlockingQueue<Event> queue = synchronousEvents.register(event);
+            consumerEventUtil.send(event);
+
+            Event response = EventResponses.handle(queue.poll(5, TimeUnit.MINUTES));
+
+            if (response.getData() == null ||
+                    response.getData().isEmpty()) throw new EntityNotFoundException(id);
+
+            DispensasjonAutomatiskFredaKulturminneResource dispensasjonautomatiskfredakulturminne = objectMapper.convertValue(response.getData().get(0), DispensasjonAutomatiskFredaKulturminneResource.class);
+
+            fintAuditService.audit(response, Status.SENT_TO_CLIENT);
+
+            return linker.toResource(dispensasjonautomatiskfredakulturminne);
+        }    
     }
 
     @GetMapping("/systemid/{id:.+}")
     public DispensasjonAutomatiskFredaKulturminneResource getDispensasjonAutomatiskFredaKulturminneBySystemId(
             @PathVariable String id,
             @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
-            @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client) {
+            @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client) throws InterruptedException {
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
         }
         if (client == null) {
             client = props.getDefaultClient();
         }
-        log.debug("SystemId: {}, OrgId: {}, Client: {}", id, orgId, client);
+        log.debug("systemId: {}, OrgId: {}, Client: {}", id, orgId, client);
 
         Event event = new Event(orgId, Constants.COMPONENT, KulturminnevernActions.GET_DISPENSASJONAUTOMATISKFREDAKULTURMINNE, client);
-        event.setQuery("systemid/" + id);
-        fintAuditService.audit(event);
+        event.setQuery("systemId/" + id);
 
-        fintAuditService.audit(event, Status.CACHE);
+        if (cacheService != null) {
+            fintAuditService.audit(event);
+            fintAuditService.audit(event, Status.CACHE);
 
-        Optional<DispensasjonAutomatiskFredaKulturminneResource> dispensasjonautomatiskfredakulturminne = cacheService.getDispensasjonAutomatiskFredaKulturminneBySystemId(orgId, id);
+            Optional<DispensasjonAutomatiskFredaKulturminneResource> dispensasjonautomatiskfredakulturminne = cacheService.getDispensasjonAutomatiskFredaKulturminneBySystemId(orgId, id);
 
-        fintAuditService.audit(event, Status.CACHE_RESPONSE, Status.SENT_TO_CLIENT);
+            fintAuditService.audit(event, Status.CACHE_RESPONSE, Status.SENT_TO_CLIENT);
 
-        return dispensasjonautomatiskfredakulturminne.map(linker::toResource).orElseThrow(() -> new EntityNotFoundException(id));
+            return dispensasjonautomatiskfredakulturminne.map(linker::toResource).orElseThrow(() -> new EntityNotFoundException(id));
+
+        } else {
+            BlockingQueue<Event> queue = synchronousEvents.register(event);
+            consumerEventUtil.send(event);
+
+            Event response = EventResponses.handle(queue.poll(5, TimeUnit.MINUTES));
+
+            if (response.getData() == null ||
+                    response.getData().isEmpty()) throw new EntityNotFoundException(id);
+
+            DispensasjonAutomatiskFredaKulturminneResource dispensasjonautomatiskfredakulturminne = objectMapper.convertValue(response.getData().get(0), DispensasjonAutomatiskFredaKulturminneResource.class);
+
+            fintAuditService.audit(response, Status.SENT_TO_CLIENT);
+
+            return linker.toResource(dispensasjonautomatiskfredakulturminne);
+        }    
     }
 
 
@@ -264,8 +331,6 @@ public class DispensasjonAutomatiskFredaKulturminneController {
             event.setQuery("VALIDATE");
             event.setOperation(Operation.VALIDATE);
         }
-        fintAuditService.audit(event);
-
         consumerEventUtil.send(event);
 
         statusCache.put(event.getCorrId(), event);
@@ -351,34 +416,44 @@ public class DispensasjonAutomatiskFredaKulturminneController {
     //
     // Exception handlers
     //
+    @ExceptionHandler(EventResponseException.class)
+    public ResponseEntity handleEventResponseException(EventResponseException e) {
+        return ResponseEntity.status(e.getStatus()).body(e.getResponse());
+    }
+
     @ExceptionHandler(UpdateEntityMismatchException.class)
     public ResponseEntity handleUpdateEntityMismatch(Exception e) {
-        return ResponseEntity.badRequest().body(e);
+        return ResponseEntity.badRequest().body(ErrorResponse.of(e));
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity handleEntityNotFound(Exception e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.of(e));
     }
 
     @ExceptionHandler(CreateEntityMismatchException.class)
     public ResponseEntity handleCreateEntityMismatch(Exception e) {
-        return ResponseEntity.badRequest().body(e);
+        return ResponseEntity.badRequest().body(ErrorResponse.of(e));
     }
 
     @ExceptionHandler(EntityFoundException.class)
     public ResponseEntity handleEntityFound(Exception e) {
-        return ResponseEntity.status(HttpStatus.FOUND).body(e);
+        return ResponseEntity.status(HttpStatus.FOUND).body(ErrorResponse.of(e));
     }
 
-    @ExceptionHandler(NameNotFoundException.class)
-    public ResponseEntity handleNameNotFound(Exception e) {
-        return ResponseEntity.badRequest().body(e);
+    @ExceptionHandler(CacheDisabledException.class)
+    public ResponseEntity handleBadRequest(Exception e) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ErrorResponse.of(e));
     }
 
     @ExceptionHandler(UnknownHostException.class)
     public ResponseEntity handleUnkownHost(Exception e) {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(e);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ErrorResponse.of(e));
+    }
+
+    @ExceptionHandler(InterruptedException.class)
+    public ResponseEntity handlieInterrupted(Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ErrorResponse.of(e));
     }
 
 }

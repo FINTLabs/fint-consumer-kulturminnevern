@@ -1,5 +1,6 @@
 package no.fint.consumer.admin;
 
+import no.fint.cache.Cache;
 import no.fint.cache.CacheManager;
 import no.fint.cache.utils.CacheUri;
 import no.fint.consumer.config.Constants;
@@ -18,7 +19,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RestController
@@ -65,4 +68,15 @@ public class AdminController {
     public Collection<String> getAssets() {
         return props.getAssets();
     }
+
+    @GetMapping("/caches")
+    public Map<String, Integer> getCaches() {
+        return cacheManager
+                .getKeys()
+                .stream()
+                .collect(Collectors
+                        .toMap(Function.identity(),
+                                k -> cacheManager.getCache(k).map(Cache::size).orElse(0)));
+    }
+
 }

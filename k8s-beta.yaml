@@ -54,7 +54,8 @@ spec:
             - {name: fint.hazelcast.kubernetes.labelValue, value: kultur-kulturminnevern}
             - {name: fint.relations.default-base-url, value: 'https://beta.felleskomponent.no'}
             - {name: server.context-path, value: /kultur/kulturminnevern}
-          image: fintlabs.azurecr.io/consumer-kulturminnevern:0.0.0-3.3.0-alpha-2
+            - {name: logging.level.no.fint.consumer.models.tilskuddfartoy, value: DEBUG}
+          image: fintlabs.azurecr.io/consumer-kulturminnevern:asgeir.3
           name: consumer-kultur-kulturminnevern
           ports:
             - {containerPort: 8080}

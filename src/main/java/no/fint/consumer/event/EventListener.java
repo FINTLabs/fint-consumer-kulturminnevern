@@ -39,6 +39,9 @@ public class EventListener implements FintEventListener {
     @Autowired
     private ConsumerProps props;
 
+    @Autowired
+    private SynchronousEvents synchronousEvents;
+
     @PostConstruct
     public void init() {
         fintEvents.registerUpstreamSystemListener(this);
@@ -47,11 +50,11 @@ public class EventListener implements FintEventListener {
         for (String orgId : props.getAssets()) {
             fintEvents.registerUpstreamListener(orgId, this);
         }
-        log.info("Upstream listeners registered.");
+    	log.info("Upstream listeners registered.");
     }
 
-    @Override
-    public void accept(Event event) {
+	@Override
+	public void accept(Event event) {
         log.debug("Received event: {}", event);
         log.trace("Event data: {}", event.getData());
         if (event.isRegisterOrgId()) {
@@ -68,16 +71,13 @@ public class EventListener implements FintEventListener {
         if (statusCache.containsKey(event.getCorrId())) {
             statusCache.put(event.getCorrId(), event);
         }
+        if (synchronousEvents.dispatch(event)) {
+            return;
+        }
         if (event.getOperation() == Operation.VALIDATE) {
             log.debug("Ignoring validation event.");
             return;
         }
-
-        if (event.getOperation() == Operation.READ) {
-            log.info("Ignoring read event");
-            return;
-        }
-
         if (event.getResponseStatus() == ResponseStatus.REJECTED || event.getResponseStatus() == ResponseStatus.ERROR) {
             log.debug("Ignoring response status {}", event.getResponseStatus());
             return;
@@ -89,14 +89,14 @@ public class EventListener implements FintEventListener {
                 supportedCacheServices.forEach(cacheService -> cacheService.onAction(event));
                 fintAuditService.audit(event, Status.CACHE);
             } catch (Exception e) {
-                log.warn("Error handling event {} {}", event.getOrgId(), event.getCorrId(), e);
+                log.debug("Error handling event {} {}", event.getOrgId(), event.getCorrId(), e);
                 event.setMessage(ExceptionUtils.getStackTrace(e));
                 fintAuditService.audit(event, Status.ERROR);
             }
         } else {
             event.setMessage("No Cache Service supports action");
             fintAuditService.audit(event, Status.ERROR);
-            log.warn("Unhandled event: {}", event);
+            log.debug("Unhandled event: {}", event);
         }
     }
 

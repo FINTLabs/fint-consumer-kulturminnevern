@@ -1,3 +1,11 @@
 springfox:
   title: '@title@'
   version: '@version@'
+
+fint:
+  consumer:
+    cache:
+      disabled:
+        dispensasjonautomatiskfredakulturminne: true
+        tilskuddfartoy: true
+        tilskuddfredahusprivateie: true

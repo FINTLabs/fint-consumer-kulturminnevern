@@ -2,10 +2,7 @@ package no.fint.consumer.config;
 
 import com.google.common.collect.ImmutableMap;
 import no.fint.consumer.utils.RestEndpoints;
-import no.fint.model.administrasjon.arkiv.DokumentStatus;
-import no.fint.model.administrasjon.arkiv.Dokumentfil;
-import no.fint.model.administrasjon.arkiv.Saksstatus;
-import no.fint.model.administrasjon.arkiv.TilknyttetRegistreringSom;
+import no.fint.model.administrasjon.arkiv.*;
 import no.fint.model.kultur.kulturminnevern.DispensasjonAutomatiskFredaKulturminne;
 import no.fint.model.kultur.kulturminnevern.TilskuddFartoy;
 import no.fint.model.kultur.kulturminnevern.TilskuddFredaHusPrivatEie;
@@ -24,6 +21,7 @@ public class LinkMapper {
                 .put(TilknyttetRegistreringSom.class.getName(), "/administrasjon/arkiv/tilknyttetregistreringsom")
                 .put(DokumentStatus.class.getName(), "/administrasjon/arkiv/dokumentstatus")
                 .put(Dokumentfil.class.getName(), "/administrasjon/arkiv/dokumentfil")
+                .put(JournalpostType.class.getName(), "/administrasjon/arkiv/journalposttype")
                 .build();
     }
 

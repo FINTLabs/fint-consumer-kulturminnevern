@@ -22,6 +22,7 @@ public class LinkMapper {
                 .put(DokumentStatus.class.getName(), "/administrasjon/arkiv/dokumentstatus")
                 .put(Dokumentfil.class.getName(), "/administrasjon/arkiv/dokumentfil")
                 .put(JournalpostType.class.getName(), "/administrasjon/arkiv/journalposttype")
+                .put(JournalStatus.class.getName(), "/administrasjon/arkiv/journalstatus")
                 .build();
     }
 

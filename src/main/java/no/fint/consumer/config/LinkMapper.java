@@ -21,6 +21,7 @@ public class LinkMapper {
                 .put(TilknyttetRegistreringSom.class.getName(), "/administrasjon/arkiv/tilknyttetregistreringsom")
                 .put(DokumentStatus.class.getName(), "/administrasjon/arkiv/dokumentstatus")
                 .put(Dokumentfil.class.getName(), "/administrasjon/arkiv/dokumentfil")
+                .put(Korrespondansepart.class.getName(), "/administrasjon/arkiv/korrespondansepart")
                 .put(KorrespondansepartType.class.getName(), "/administrasjon/arkiv/korrespondanseparttype")
                 .put(JournalpostType.class.getName(), "/administrasjon/arkiv/journalposttype")
                 .put(JournalStatus.class.getName(), "/administrasjon/arkiv/journalstatus")

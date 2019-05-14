@@ -26,6 +26,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.validation.Valid;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.List;
@@ -322,7 +323,7 @@ public class TilskuddFartoyController {
     public ResponseEntity postTilskuddFartoy(
             @RequestHeader(name = HeaderConstants.ORG_ID) String orgId,
             @RequestHeader(name = HeaderConstants.CLIENT) String client,
-            @RequestBody TilskuddFartoyResource body,
+            @RequestBody @Valid TilskuddFartoyResource body,
             @RequestParam(name = "validate", required = false) boolean validate
     ) {
         log.debug("postTilskuddFartoy, Validate: {}, OrgId: {}, Client: {}", validate, orgId, client);
@@ -367,7 +368,17 @@ public class TilskuddFartoyController {
         URI location = UriComponentsBuilder.fromUriString(linker.self()).path("status/{id}").buildAndExpand(event.getCorrId()).toUri();
         return ResponseEntity.status(HttpStatus.ACCEPTED).location(location).build();
     }
-  
+
+    @PutMapping("/mappeid/{ar}/{sekvensnummer}")
+    public ResponseEntity putTilskuddFartoyByMappeArSekvensnummer(
+            @PathVariable String ar,
+            @PathVariable String sekvensnummer,
+            @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
+            @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client,
+            @RequestBody TilskuddFartoyResource body) {
+        return putTilskuddFartoyByMappeId(ar + "/" + sekvensnummer, orgId, client, body);
+    }
+
     @PutMapping("/mappeid/{id:.+}")
     public ResponseEntity putTilskuddFartoyByMappeId(
             @PathVariable String id,

@@ -323,7 +323,7 @@ public class TilskuddFartoyController {
     public ResponseEntity postTilskuddFartoy(
             @RequestHeader(name = HeaderConstants.ORG_ID) String orgId,
             @RequestHeader(name = HeaderConstants.CLIENT) String client,
-            @RequestBody @Valid TilskuddFartoyResource body,
+            @RequestBody TilskuddFartoyResource body,
             @RequestParam(name = "validate", required = false) boolean validate
     ) {
         log.debug("postTilskuddFartoy, Validate: {}, OrgId: {}, Client: {}", validate, orgId, client);

@@ -3,6 +3,8 @@ package no.fint.consumer.config;
 import com.google.common.collect.ImmutableMap;
 import no.fint.consumer.utils.RestEndpoints;
 import no.fint.model.administrasjon.arkiv.*;
+import no.fint.model.administrasjon.organisasjon.Organisasjonselement;
+import no.fint.model.administrasjon.personal.Personalressurs;
 import no.fint.model.kultur.kulturminnevern.DispensasjonAutomatiskFredaKulturminne;
 import no.fint.model.kultur.kulturminnevern.TilskuddFartoy;
 import no.fint.model.kultur.kulturminnevern.TilskuddFredaHusPrivatEie;
@@ -28,6 +30,8 @@ public class LinkMapper {
                 .put(KorrespondansepartType.class.getName(), "/administrasjon/arkiv/korrespondanseparttype")
                 .put(JournalpostType.class.getName(), "/administrasjon/arkiv/journalposttype")
                 .put(JournalStatus.class.getName(), "/administrasjon/arkiv/journalstatus")
+                .put(Organisasjonselement.class.getName(), "/administrasjon/organisasjon/organisasjonselement")
+                .put(Personalressurs.class.getName(), "/administrasjon/personal/personalressurs")
                 .build();
     }
 

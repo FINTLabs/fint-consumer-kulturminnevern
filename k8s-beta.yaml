@@ -55,7 +55,7 @@ spec:
             - {name: fint.relations.default-base-url, value: 'https://beta.felleskomponent.no'}
             - {name: server.context-path, value: /kultur/kulturminnevern}
             - {name: logging.level.no.fint.consumer.models.tilskuddfartoy, value: DEBUG}
-          image: fintlabs.azurecr.io/consumer-kulturminnevern:PR-1.13
+          image: fintlabs.azurecr.io/consumer-kulturminnevern:PR-1.14
           name: consumer-kultur-kulturminnevern
           ports:
             - {containerPort: 8080}

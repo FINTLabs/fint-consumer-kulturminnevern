@@ -46,7 +46,7 @@ spec:
             - name: fint.audit.mongo.connection-string
               valueFrom:
                 secretKeyRef: {key: mongodb, name: fint-audit}
-            - {name: fint.audit.mongo.collection, value: '$source'}
+            - {name: fint.audit.mongo.collection, value: auditEvent}
             - {name: fint.cache.manager, value: default}
             - {name: fint.events.orgIds, value: health.fintlabs.no}
             - {name: fint.hazelcast.kubernetes.enabled, value: 'true'}
@@ -94,7 +94,7 @@ spec:
             - name: fint.audit.mongo.connection-string
               valueFrom:
                 secretKeyRef: {key: mongodb, name: fint-audit}
-            - {name: fint.audit.mongo.collection, value: '$orgId'}
+            - {name: fint.audit.mongo.collection, value: auditEvent}
             - {name: fint.events.orgIds, value: health.fintlabs.no}
             - {name: fint.hazelcast.kubernetes.enabled, value: 'true'}
             - {name: fint.hazelcast.kubernetes.namespace, value: default}
@@ -103,7 +103,7 @@ spec:
             - {name: fint.provider.max-number-of-emitters, value: '5'}
             - {name: server.context-path, value: /kultur/kulturminnevern/provider}
             - {name: fint.provider.assets.endpoint, value: 'https://admin.fintlabs.no/api/components/assets/kultur_kulturminnevern'}
-          image: fintlabs.azurecr.io/provider:2.1.0
+          image: fintlabs.azurecr.io/provider:PR-32.1
           name: provider-kultur-kulturminnevern
           ports:
             - {containerPort: 8080}

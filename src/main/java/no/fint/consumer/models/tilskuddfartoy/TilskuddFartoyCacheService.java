@@ -17,6 +17,7 @@ import no.fint.relations.FintResourceCompatibility;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +31,7 @@ import no.fint.model.kultur.kulturminnevern.KulturminnevernActions;
 
 @Slf4j
 @Service
+@ConditionalOnProperty(name = "fint.consumer.cache.disabled.tilskuddfartoy", havingValue = "false", matchIfMissing = true)
 public class TilskuddFartoyCacheService extends CacheService<TilskuddFartoyResource> {
 
     public static final String MODEL = TilskuddFartoy.class.getSimpleName().toLowerCase();

@@ -57,6 +57,7 @@ spec:
             - {name: server.context-path, value: /kultur/kulturminnevern}
             - {name: logging.level.no.fint.consumer.models.tilskuddfartoy, value: DEBUG}
             - {name: logging.level.no.fint.audit.plugin.mongo, value: DEBUG}
+            - {name: logging.level.no.fint.consumer.event, value: DEBUG}
           image: fintlabs.azurecr.io/consumer-kulturminnevern:build.5
           name: consumer-kultur-kulturminnevern
           ports:

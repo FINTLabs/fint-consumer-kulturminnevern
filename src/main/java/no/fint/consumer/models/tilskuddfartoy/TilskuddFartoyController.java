@@ -282,7 +282,7 @@ public class TilskuddFartoyController {
             @RequestHeader(HeaderConstants.CLIENT) String client) {
         log.debug("/status/{} for {} from {}", id, orgId, client);
         if (!statusCache.containsKey(id)) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.GONE).build();
         }
         Event event = statusCache.get(id);
         log.debug("Event: {}", event);
@@ -304,7 +304,7 @@ public class TilskuddFartoyController {
                 URI location = UriComponentsBuilder.fromUriString(linker.getSelfHref(result.get(0))).build().toUri();
                 event.setMessage(location.toString());
                 fintAuditService.audit(event, Status.SENT_TO_CLIENT);
-                return ResponseEntity.status(HttpStatus.SEE_OTHER).location(location).build();
+                return ResponseEntity.created(location).body(linker.toResource(result.get(0)));
             case ERROR:
                 fintAuditService.audit(event, Status.SENT_TO_CLIENT);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(event.getResponse());

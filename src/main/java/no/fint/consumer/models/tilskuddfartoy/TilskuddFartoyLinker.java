@@ -7,6 +7,7 @@ import no.fint.relations.FintLinker;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
+import java.util.stream.IntStream;
 
 import static java.util.Objects.isNull;
 import static org.springframework.util.StringUtils.isEmpty;
@@ -45,6 +46,21 @@ public class TilskuddFartoyLinker extends FintLinker<TilskuddFartoyResource> {
         
         return null;
     }
-    
+
+    int[] hashCodes(TilskuddFartoyResource tilskuddfartoy) {
+        IntStream.Builder builder = IntStream.builder();
+        if (!isNull(tilskuddfartoy.getSoknadsnummer()) && !isEmpty(tilskuddfartoy.getSoknadsnummer().getIdentifikatorverdi())) {
+            builder.add(tilskuddfartoy.getSoknadsnummer().getIdentifikatorverdi().hashCode());
+        }
+        if (!isNull(tilskuddfartoy.getMappeId()) && !isEmpty(tilskuddfartoy.getMappeId().getIdentifikatorverdi())) {
+            builder.add(tilskuddfartoy.getMappeId().getIdentifikatorverdi().hashCode());
+        }
+        if (!isNull(tilskuddfartoy.getSystemId()) && !isEmpty(tilskuddfartoy.getSystemId().getIdentifikatorverdi())) {
+            builder.add(tilskuddfartoy.getSystemId().getIdentifikatorverdi().hashCode());
+        }
+        
+        return builder.build().toArray();
+    }
+
 }
 

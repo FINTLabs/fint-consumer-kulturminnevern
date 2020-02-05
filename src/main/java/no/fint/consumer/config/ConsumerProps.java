@@ -22,6 +22,9 @@ public class ConsumerProps {
     @Value("${fint.consumer.default-org-id:fint.no}")
     private String defaultOrgId;
 
+    @Value("${fint.consumer.status.created:false}")
+    private boolean useCreated;
+
     private Set<String> assets;
 
     @Autowired

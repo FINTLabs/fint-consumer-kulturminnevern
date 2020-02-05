@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import no.fint.audit.FintAuditService;
 
+import no.fint.cache.exceptions.*;
 import no.fint.consumer.config.Constants;
 import no.fint.consumer.config.ConsumerProps;
 import no.fint.consumer.event.ConsumerEventUtil;
@@ -95,17 +96,6 @@ public class TilskuddFredaHusPrivatEieController {
         return ImmutableMap.of("size", cacheService.getAll(orgId).size());
     }
 
-    @PostMapping("/cache/rebuild")
-    public void rebuildCache(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
-        if (cacheService == null) {
-            throw new CacheDisabledException("TilskuddFredaHusPrivatEie cache is disabled.");
-        }
-        if (props.isOverrideOrgId() || orgId == null) {
-            orgId = props.getDefaultOrgId();
-        }
-        cacheService.rebuildCache(orgId);
-    }
-
     @GetMapping
     public TilskuddFredaHusPrivatEieResources getTilskuddFredaHusPrivatEie(
             @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
@@ -123,6 +113,7 @@ public class TilskuddFredaHusPrivatEieController {
         log.debug("OrgId: {}, Client: {}", orgId, client);
 
         Event event = new Event(orgId, Constants.COMPONENT, KulturminnevernActions.GET_ALL_TILSKUDDFREDAHUSPRIVATEIE, client);
+        event.setOperation(Operation.READ);
         fintAuditService.audit(event);
         fintAuditService.audit(event, Status.CACHE);
 
@@ -153,6 +144,7 @@ public class TilskuddFredaHusPrivatEieController {
         log.debug("soknadsnummer: {}, OrgId: {}, Client: {}", id, orgId, client);
 
         Event event = new Event(orgId, Constants.COMPONENT, KulturminnevernActions.GET_TILSKUDDFREDAHUSPRIVATEIE, client);
+        event.setOperation(Operation.READ);
         event.setQuery("soknadsnummer/" + id);
 
         if (cacheService != null) {
@@ -196,6 +188,7 @@ public class TilskuddFredaHusPrivatEieController {
         log.debug("mappeId: {}, OrgId: {}, Client: {}", id, orgId, client);
 
         Event event = new Event(orgId, Constants.COMPONENT, KulturminnevernActions.GET_TILSKUDDFREDAHUSPRIVATEIE, client);
+        event.setOperation(Operation.READ);
         event.setQuery("mappeId/" + id);
 
         if (cacheService != null) {
@@ -239,6 +232,7 @@ public class TilskuddFredaHusPrivatEieController {
         log.debug("systemId: {}, OrgId: {}, Client: {}", id, orgId, client);
 
         Event event = new Event(orgId, Constants.COMPONENT, KulturminnevernActions.GET_TILSKUDDFREDAHUSPRIVATEIE, client);
+        event.setOperation(Operation.READ);
         event.setQuery("systemId/" + id);
 
         if (cacheService != null) {
@@ -270,6 +264,7 @@ public class TilskuddFredaHusPrivatEieController {
 
 
 
+    // Writable class
     @GetMapping("/status/{id}")
     public ResponseEntity getStatus(
             @PathVariable String id,
@@ -277,7 +272,7 @@ public class TilskuddFredaHusPrivatEieController {
             @RequestHeader(HeaderConstants.CLIENT) String client) {
         log.debug("/status/{} for {} from {}", id, orgId, client);
         if (!statusCache.containsKey(id)) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.GONE).build();
         }
         Event event = statusCache.get(id);
         log.debug("Event: {}", event);
@@ -299,7 +294,9 @@ public class TilskuddFredaHusPrivatEieController {
                 URI location = UriComponentsBuilder.fromUriString(linker.getSelfHref(result.get(0))).build().toUri();
                 event.setMessage(location.toString());
                 fintAuditService.audit(event, Status.SENT_TO_CLIENT);
-                return ResponseEntity.status(HttpStatus.SEE_OTHER).location(location).build();
+                if (props.isUseCreated())
+                    return ResponseEntity.created(location).body(linker.toResource(result.get(0)));
+                return ResponseEntity.status(HttpStatus.SEE_OTHER).location(location).body(linker.toResource(result.get(0)));
             case ERROR:
                 fintAuditService.audit(event, Status.SENT_TO_CLIENT);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(event.getResponse());
@@ -451,9 +448,9 @@ public class TilskuddFredaHusPrivatEieController {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ErrorResponse.of(e));
     }
 
-    @ExceptionHandler(InterruptedException.class)
-    public ResponseEntity handlieInterrupted(Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ErrorResponse.of(e));
+    @ExceptionHandler(CacheNotFoundException.class)
+    public ResponseEntity handleCacheNotFound(Exception e) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ErrorResponse.of(e));
     }
 
 }

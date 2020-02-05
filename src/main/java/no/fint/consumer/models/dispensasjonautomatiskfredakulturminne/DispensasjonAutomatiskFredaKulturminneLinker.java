@@ -7,6 +7,7 @@ import no.fint.relations.FintLinker;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
+import java.util.stream.IntStream;
 
 import static java.util.Objects.isNull;
 import static org.springframework.util.StringUtils.isEmpty;
@@ -45,6 +46,21 @@ public class DispensasjonAutomatiskFredaKulturminneLinker extends FintLinker<Dis
         
         return null;
     }
-    
+
+    int[] hashCodes(DispensasjonAutomatiskFredaKulturminneResource dispensasjonautomatiskfredakulturminne) {
+        IntStream.Builder builder = IntStream.builder();
+        if (!isNull(dispensasjonautomatiskfredakulturminne.getSoknadsnummer()) && !isEmpty(dispensasjonautomatiskfredakulturminne.getSoknadsnummer().getIdentifikatorverdi())) {
+            builder.add(dispensasjonautomatiskfredakulturminne.getSoknadsnummer().getIdentifikatorverdi().hashCode());
+        }
+        if (!isNull(dispensasjonautomatiskfredakulturminne.getMappeId()) && !isEmpty(dispensasjonautomatiskfredakulturminne.getMappeId().getIdentifikatorverdi())) {
+            builder.add(dispensasjonautomatiskfredakulturminne.getMappeId().getIdentifikatorverdi().hashCode());
+        }
+        if (!isNull(dispensasjonautomatiskfredakulturminne.getSystemId()) && !isEmpty(dispensasjonautomatiskfredakulturminne.getSystemId().getIdentifikatorverdi())) {
+            builder.add(dispensasjonautomatiskfredakulturminne.getSystemId().getIdentifikatorverdi().hashCode());
+        }
+        
+        return builder.build().toArray();
+    }
+
 }
 

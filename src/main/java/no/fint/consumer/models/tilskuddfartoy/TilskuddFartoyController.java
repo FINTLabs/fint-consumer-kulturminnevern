@@ -5,7 +5,10 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.collect.ImmutableMap;
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;
+
 import no.fint.audit.FintAuditService;
+
+import no.fint.cache.exceptions.*;
 import no.fint.consumer.config.Constants;
 import no.fint.consumer.config.ConsumerProps;
 import no.fint.consumer.event.ConsumerEventUtil;
@@ -14,11 +17,11 @@ import no.fint.consumer.exceptions.*;
 import no.fint.consumer.status.StatusCache;
 import no.fint.consumer.utils.EventResponses;
 import no.fint.consumer.utils.RestEndpoints;
+
 import no.fint.event.model.*;
-import no.fint.model.kultur.kulturminnevern.KulturminnevernActions;
-import no.fint.model.resource.kultur.kulturminnevern.TilskuddFartoyResource;
-import no.fint.model.resource.kultur.kulturminnevern.TilskuddFartoyResources;
+
 import no.fint.relations.FintRelationsMediaType;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,14 +29,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import javax.validation.Valid;
-import java.net.URI;
 import java.net.UnknownHostException;
+import java.net.URI;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import no.fint.model.resource.kultur.kulturminnevern.TilskuddFartoyResource;
+import no.fint.model.resource.kultur.kulturminnevern.TilskuddFartoyResources;
+import no.fint.model.kultur.kulturminnevern.KulturminnevernActions;
 
 @Slf4j
 @Api(tags = {"TilskuddFartoy"})
@@ -89,17 +96,6 @@ public class TilskuddFartoyController {
         return ImmutableMap.of("size", cacheService.getAll(orgId).size());
     }
 
-    @PostMapping("/cache/rebuild")
-    public void rebuildCache(@RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId) {
-        if (cacheService == null) {
-            throw new CacheDisabledException("TilskuddFartoy cache is disabled.");
-        }
-        if (props.isOverrideOrgId() || orgId == null) {
-            orgId = props.getDefaultOrgId();
-        }
-        cacheService.rebuildCache(orgId);
-    }
-
     @GetMapping
     public TilskuddFartoyResources getTilskuddFartoy(
             @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
@@ -117,6 +113,7 @@ public class TilskuddFartoyController {
         log.debug("OrgId: {}, Client: {}", orgId, client);
 
         Event event = new Event(orgId, Constants.COMPONENT, KulturminnevernActions.GET_ALL_TILSKUDDFARTOY, client);
+        event.setOperation(Operation.READ);
         fintAuditService.audit(event);
         fintAuditService.audit(event, Status.CACHE);
 
@@ -147,6 +144,7 @@ public class TilskuddFartoyController {
         log.debug("soknadsnummer: {}, OrgId: {}, Client: {}", id, orgId, client);
 
         Event event = new Event(orgId, Constants.COMPONENT, KulturminnevernActions.GET_TILSKUDDFARTOY, client);
+        event.setOperation(Operation.READ);
         event.setQuery("soknadsnummer/" + id);
 
         if (cacheService != null) {
@@ -275,6 +273,7 @@ public class TilskuddFartoyController {
 
 
 
+    // Writable class
     @GetMapping("/status/{id}")
     public ResponseEntity getStatus(
             @PathVariable String id,
@@ -304,7 +303,9 @@ public class TilskuddFartoyController {
                 URI location = UriComponentsBuilder.fromUriString(linker.getSelfHref(result.get(0))).build().toUri();
                 event.setMessage(location.toString());
                 fintAuditService.audit(event, Status.SENT_TO_CLIENT);
-                return ResponseEntity.created(location).body(linker.toResource(result.get(0)));
+                if (props.isUseCreated())
+                    return ResponseEntity.created(location).body(linker.toResource(result.get(0)));
+                return ResponseEntity.status(HttpStatus.SEE_OTHER).location(location).body(linker.toResource(result.get(0)));
             case ERROR:
                 fintAuditService.audit(event, Status.SENT_TO_CLIENT);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(event.getResponse());
@@ -466,9 +467,9 @@ public class TilskuddFartoyController {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ErrorResponse.of(e));
     }
 
-    @ExceptionHandler(InterruptedException.class)
-    public ResponseEntity handlieInterrupted(Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ErrorResponse.of(e));
+    @ExceptionHandler(CacheNotFoundException.class)
+    public ResponseEntity handleCacheNotFound(Exception e) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ErrorResponse.of(e));
     }
 
 }

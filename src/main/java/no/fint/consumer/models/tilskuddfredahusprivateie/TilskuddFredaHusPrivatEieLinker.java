@@ -7,6 +7,7 @@ import no.fint.relations.FintLinker;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
+import java.util.stream.IntStream;
 
 import static java.util.Objects.isNull;
 import static org.springframework.util.StringUtils.isEmpty;
@@ -45,6 +46,21 @@ public class TilskuddFredaHusPrivatEieLinker extends FintLinker<TilskuddFredaHus
         
         return null;
     }
-    
+
+    int[] hashCodes(TilskuddFredaHusPrivatEieResource tilskuddfredahusprivateie) {
+        IntStream.Builder builder = IntStream.builder();
+        if (!isNull(tilskuddfredahusprivateie.getSoknadsnummer()) && !isEmpty(tilskuddfredahusprivateie.getSoknadsnummer().getIdentifikatorverdi())) {
+            builder.add(tilskuddfredahusprivateie.getSoknadsnummer().getIdentifikatorverdi().hashCode());
+        }
+        if (!isNull(tilskuddfredahusprivateie.getMappeId()) && !isEmpty(tilskuddfredahusprivateie.getMappeId().getIdentifikatorverdi())) {
+            builder.add(tilskuddfredahusprivateie.getMappeId().getIdentifikatorverdi().hashCode());
+        }
+        if (!isNull(tilskuddfredahusprivateie.getSystemId()) && !isEmpty(tilskuddfredahusprivateie.getSystemId().getIdentifikatorverdi())) {
+            builder.add(tilskuddfredahusprivateie.getSystemId().getIdentifikatorverdi().hashCode());
+        }
+        
+        return builder.build().toArray();
+    }
+
 }
 

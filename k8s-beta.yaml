@@ -39,27 +39,24 @@ spec:
       labels: {fint.stack: kultur-kulturminnevern, fint.role: consumer}
     spec:
       containers:
-        - env:
-            - {name: TZ, value: Europe/Oslo}
-            - {name: JAVA_TOOL_OPTIONS, value: '-XX:+ExitOnOutOfMemoryError -Xmx2G -verbose:gc'}
-            - {name: fint.audit.mongo.databasename, value: fint-audit-beta}
+        - name: consumer-kultur-kulturminnevern
+          image: fintlabs.azurecr.io/consumer-kulturminnevern:PR-3.2
+          envFrom:
+            - configMapRef:
+                name: fint-environment
+                optional: true
+          env:
             - name: fint.audit.mongo.connection-string
               valueFrom:
                 secretKeyRef: {key: mongodb, name: fint-audit}
-            - {name: fint.audit.mongo.collection, value: auditEvent}
-            - {name: fint.cache.manager, value: default}
-            - {name: fint.events.orgIds, value: health.fintlabs.no}
             - {name: fint.hazelcast.kubernetes.enabled, value: 'true'}
             - {name: fint.hazelcast.kubernetes.namespace, value: default}
             - {name: fint.hazelcast.kubernetes.labelName, value: fint.stack}
             - {name: fint.hazelcast.kubernetes.labelValue, value: kultur-kulturminnevern}
-            - {name: fint.relations.default-base-url, value: 'https://beta.felleskomponent.no'}
             - {name: server.context-path, value: /kultur/kulturminnevern}
             - {name: logging.level.no.fint.consumer.models.tilskuddfartoy, value: DEBUG}
             - {name: logging.level.no.fint.audit.plugin.mongo, value: DEBUG}
             - {name: logging.level.no.fint.consumer.event, value: DEBUG}
-          image: fintlabs.azurecr.io/consumer-kulturminnevern:build.5
-          name: consumer-kultur-kulturminnevern
           ports:
             - {containerPort: 8080}
           readinessProbe:
@@ -88,15 +85,16 @@ spec:
       labels: {fint.stack: kultur-kulturminnevern, fint.role: provider}
     spec:
       containers:
-        - env:
-            - {name: TZ, value: Europe/Oslo}
-            - {name: JAVA_TOOL_OPTIONS, value: '-XX:+ExitOnOutOfMemoryError -Xmx2G -verbose:gc'}
-            - {name: fint.audit.mongo.databasename, value: fint-audit-beta}
+        - name: provider-kultur-kulturminnevern
+          image: fintlabs.azurecr.io/provider:2.3.0-alpha-1
+          envFrom:
+            - configMapRef:
+                name: fint-environment
+                optional: true
+          env:
             - name: fint.audit.mongo.connection-string
               valueFrom:
                 secretKeyRef: {key: mongodb, name: fint-audit}
-            - {name: fint.audit.mongo.collection, value: auditEvent}
-            - {name: fint.events.orgIds, value: health.fintlabs.no}
             - {name: fint.hazelcast.kubernetes.enabled, value: 'true'}
             - {name: fint.hazelcast.kubernetes.namespace, value: default}
             - {name: fint.hazelcast.kubernetes.labelName, value: fint.stack}
@@ -104,8 +102,6 @@ spec:
             - {name: fint.provider.max-number-of-emitters, value: '5'}
             - {name: server.context-path, value: /kultur/kulturminnevern/provider}
             - {name: fint.provider.assets.endpoint, value: 'https://admin.fintlabs.no/api/components/assets/kultur_kulturminnevern'}
-          image: fintlabs.azurecr.io/provider:PR-32.4
-          name: provider-kultur-kulturminnevern
           ports:
             - {containerPort: 8080}
           readinessProbe:

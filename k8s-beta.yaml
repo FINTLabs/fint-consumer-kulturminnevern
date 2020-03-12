@@ -58,7 +58,12 @@ spec:
             - {name: logging.level.no.fint.consumer.models.tilskuddfartoy, value: DEBUG}
             - {name: logging.level.no.fint.audit.plugin.mongo, value: DEBUG}
             - {name: logging.level.no.fint.consumer.event, value: DEBUG}
-          image: fintlabs.azurecr.io/consumer-kulturminnevern:build.5
+          envFrom:
+            - configMapRef:
+                name: fint-environment
+            - secretRef:
+                name: fint-events-azure-eventhub
+          image: fintlabs.azurecr.io/consumer-kulturminnevern:build.12
           name: consumer-kultur-kulturminnevern
           ports:
             - {containerPort: 8080}
@@ -104,7 +109,12 @@ spec:
             - {name: fint.provider.max-number-of-emitters, value: '5'}
             - {name: server.context-path, value: /kultur/kulturminnevern/provider}
             - {name: fint.provider.assets.endpoint, value: 'https://admin.fintlabs.no/api/components/assets/kultur_kulturminnevern'}
-          image: fintlabs.azurecr.io/provider:PR-32.4
+          envFrom:
+            - configMapRef:
+                name: fint-environment
+            - secretRef:
+                name: fint-events-azure-eventhub
+          image: fintlabs.azurecr.io/provider:2.3.0-alpha-2
           name: provider-kultur-kulturminnevern
           ports:
             - {containerPort: 8080}

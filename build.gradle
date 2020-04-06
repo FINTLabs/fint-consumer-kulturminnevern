@@ -34,6 +34,7 @@ repositories {
 }
 
 dependencies {
+    compile("no.fint:fint-arkiv-model-java:${apiVersion}")
 
     compile('no.fint:fint-cache:2.1.0')
 

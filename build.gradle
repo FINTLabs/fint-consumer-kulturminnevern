@@ -34,20 +34,19 @@ repositories {
 }
 
 dependencies {
-    if (project.hasProperty("eventhub")) {
-        compile('no.fint:fint-audit-azure-eventhub-plugin:0.3.0')
-        compile('io.projectreactor:reactor-core:3.3.2.RELEASE')
-    } else {
-        compile('no.fint:fint-audit-mongo-plugin:1.7.0-rc-2')
-    }
-    compile("no.fint:fint-arkiv-model-java:${apiVersion}")
 
     compile('no.fint:fint-cache:2.1.0')
+
+    compile('no.fint:fint-audit-azure-eventhub-plugin:0.3.0')
+    compile('io.projectreactor:reactor-core:3.3.2.RELEASE')
+
+    compile('no.fint:fint-api-service-discover:1.1.0')
+    compile('no.fint:fint-cache:2.5.0-rc-1')
     compile('no.fint:fint-dependencies:0.0.3')
     compile('no.fint:fint-event-model:3.0.0')
     compile('no.fint:fint-events:2.2.0')
     compile('no.fint:fint-hazelcast:1.2.0-rc-1')
-    compile('no.fint:fint-relations:2.0.0')
+    compile('no.fint:fint-relations:2.1.0-beta-1')
     compile('no.fint:fint-spring-secrets:0.1.0')
 
     compile('com.hazelcast:hazelcast:3.11.2')
@@ -96,7 +95,6 @@ jar {
 sourceCompatibility = 1.8
 
 import org.apache.tools.ant.filters.ReplaceTokens
-
 afterEvaluate {
     configure(processResources) {
         filesMatching('**/*.yml') {

@@ -59,7 +59,7 @@ dependencies {
     compile('org.springframework.boot:spring-boot-starter-web')
     runtime('org.springframework.boot:spring-boot-actuator')
 
-    testCompile('no.fint:fint-test-utils:0.0.4')
+    testCompile('no.fint:fint-test-utils:0.0.5')
     testCompile("cglib:cglib-nodep:${cglibVersion}")
     testCompile("org.spockframework:spock-spring:${spockSpringVersion}")
     testCompile("org.spockframework:spock-core:${spockSpringVersion}")

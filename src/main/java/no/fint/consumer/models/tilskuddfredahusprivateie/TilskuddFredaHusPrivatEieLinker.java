@@ -68,20 +68,5 @@ public class TilskuddFredaHusPrivatEieLinker extends FintLinker<TilskuddFredaHus
         return builder.build().toArray();
     }
 
-    int[] hashCodes(TilskuddFredaHusPrivatEieResource tilskuddfredahusprivateie) {
-        IntStream.Builder builder = IntStream.builder();
-        if (!isNull(tilskuddfredahusprivateie.getSoknadsnummer()) && !isEmpty(tilskuddfredahusprivateie.getSoknadsnummer().getIdentifikatorverdi())) {
-            builder.add(tilskuddfredahusprivateie.getSoknadsnummer().getIdentifikatorverdi().hashCode());
-        }
-        if (!isNull(tilskuddfredahusprivateie.getMappeId()) && !isEmpty(tilskuddfredahusprivateie.getMappeId().getIdentifikatorverdi())) {
-            builder.add(tilskuddfredahusprivateie.getMappeId().getIdentifikatorverdi().hashCode());
-        }
-        if (!isNull(tilskuddfredahusprivateie.getSystemId()) && !isEmpty(tilskuddfredahusprivateie.getSystemId().getIdentifikatorverdi())) {
-            builder.add(tilskuddfredahusprivateie.getSystemId().getIdentifikatorverdi().hashCode());
-        }
-
-        return builder.build().toArray();
-    }
-
 }
 

@@ -68,20 +68,5 @@ public class TilskuddFartoyLinker extends FintLinker<TilskuddFartoyResource> {
         return builder.build().toArray();
     }
 
-    int[] hashCodes(TilskuddFartoyResource tilskuddfartoy) {
-        IntStream.Builder builder = IntStream.builder();
-        if (!isNull(tilskuddfartoy.getSoknadsnummer()) && !isEmpty(tilskuddfartoy.getSoknadsnummer().getIdentifikatorverdi())) {
-            builder.add(tilskuddfartoy.getSoknadsnummer().getIdentifikatorverdi().hashCode());
-        }
-        if (!isNull(tilskuddfartoy.getMappeId()) && !isEmpty(tilskuddfartoy.getMappeId().getIdentifikatorverdi())) {
-            builder.add(tilskuddfartoy.getMappeId().getIdentifikatorverdi().hashCode());
-        }
-        if (!isNull(tilskuddfartoy.getSystemId()) && !isEmpty(tilskuddfartoy.getSystemId().getIdentifikatorverdi())) {
-            builder.add(tilskuddfartoy.getSystemId().getIdentifikatorverdi().hashCode());
-        }
-
-        return builder.build().toArray();
-    }
-
 }
 

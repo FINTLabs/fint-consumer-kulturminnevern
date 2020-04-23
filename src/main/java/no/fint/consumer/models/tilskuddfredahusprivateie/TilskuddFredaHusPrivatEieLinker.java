@@ -8,10 +8,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.util.Objects.isNull;
 import static org.springframework.util.StringUtils.isEmpty;
-
 
 @Component
 public class TilskuddFredaHusPrivatEieLinker extends FintLinker<TilskuddFredaHusPrivatEieResource> {
@@ -34,17 +34,23 @@ public class TilskuddFredaHusPrivatEieLinker extends FintLinker<TilskuddFredaHus
 
     @Override
     public String getSelfHref(TilskuddFredaHusPrivatEieResource tilskuddfredahusprivateie) {
+        return getAllSelfHrefs(tilskuddfredahusprivateie).findFirst().orElse(null);
+    }
+
+    @Override
+    public Stream<String> getAllSelfHrefs(TilskuddFredaHusPrivatEieResource tilskuddfredahusprivateie) {
+        Stream.Builder<String> builder = Stream.builder();
         if (!isNull(tilskuddfredahusprivateie.getSoknadsnummer()) && !isEmpty(tilskuddfredahusprivateie.getSoknadsnummer().getIdentifikatorverdi())) {
-            return createHrefWithId(tilskuddfredahusprivateie.getSoknadsnummer().getIdentifikatorverdi(), "soknadsnummer");
+            builder.add(createHrefWithId(tilskuddfredahusprivateie.getSoknadsnummer().getIdentifikatorverdi(), "soknadsnummer"));
         }
         if (!isNull(tilskuddfredahusprivateie.getMappeId()) && !isEmpty(tilskuddfredahusprivateie.getMappeId().getIdentifikatorverdi())) {
-            return createHrefWithId(tilskuddfredahusprivateie.getMappeId().getIdentifikatorverdi(), "mappeid");
+            builder.add(createHrefWithId(tilskuddfredahusprivateie.getMappeId().getIdentifikatorverdi(), "mappeid"));
         }
         if (!isNull(tilskuddfredahusprivateie.getSystemId()) && !isEmpty(tilskuddfredahusprivateie.getSystemId().getIdentifikatorverdi())) {
-            return createHrefWithId(tilskuddfredahusprivateie.getSystemId().getIdentifikatorverdi(), "systemid");
+            builder.add(createHrefWithId(tilskuddfredahusprivateie.getSystemId().getIdentifikatorverdi(), "systemid"));
         }
-        
-        return null;
+
+        return builder.build();
     }
 
     int[] hashCodes(TilskuddFredaHusPrivatEieResource tilskuddfredahusprivateie) {
@@ -59,6 +65,21 @@ public class TilskuddFredaHusPrivatEieLinker extends FintLinker<TilskuddFredaHus
             builder.add(tilskuddfredahusprivateie.getSystemId().getIdentifikatorverdi().hashCode());
         }
         
+        return builder.build().toArray();
+    }
+
+    int[] hashCodes(TilskuddFredaHusPrivatEieResource tilskuddfredahusprivateie) {
+        IntStream.Builder builder = IntStream.builder();
+        if (!isNull(tilskuddfredahusprivateie.getSoknadsnummer()) && !isEmpty(tilskuddfredahusprivateie.getSoknadsnummer().getIdentifikatorverdi())) {
+            builder.add(tilskuddfredahusprivateie.getSoknadsnummer().getIdentifikatorverdi().hashCode());
+        }
+        if (!isNull(tilskuddfredahusprivateie.getMappeId()) && !isEmpty(tilskuddfredahusprivateie.getMappeId().getIdentifikatorverdi())) {
+            builder.add(tilskuddfredahusprivateie.getMappeId().getIdentifikatorverdi().hashCode());
+        }
+        if (!isNull(tilskuddfredahusprivateie.getSystemId()) && !isEmpty(tilskuddfredahusprivateie.getSystemId().getIdentifikatorverdi())) {
+            builder.add(tilskuddfredahusprivateie.getSystemId().getIdentifikatorverdi().hashCode());
+        }
+
         return builder.build().toArray();
     }
 

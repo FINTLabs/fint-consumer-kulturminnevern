@@ -44,7 +44,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: fint-environment
-                optional: true
+            - secretRef:
+                name: fint-events-azure-eventhub
           env:
             - name: fint.audit.mongo.connection-string
               valueFrom:
@@ -86,11 +87,12 @@ spec:
     spec:
       containers:
         - name: provider-kultur-kulturminnevern
-          image: fintlabs.azurecr.io/provider:2.3.0-alpha-1
+          image: fintlabs.azurecr.io/provider:2.3.0-alpha-2
           envFrom:
             - configMapRef:
                 name: fint-environment
-                optional: true
+            - secretRef:
+                name: fint-events-azure-eventhub
           env:
             - name: fint.audit.mongo.connection-string
               valueFrom:

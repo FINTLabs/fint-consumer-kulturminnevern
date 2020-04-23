@@ -93,7 +93,7 @@ public class TilskuddFartoyController {
         if (props.isOverrideOrgId() || orgId == null) {
             orgId = props.getDefaultOrgId();
         }
-        return ImmutableMap.of("size", cacheService.getAll(orgId).size());
+        return ImmutableMap.of("size", cacheService.getCacheSize(orgId));
     }
 
     @GetMapping
@@ -172,15 +172,6 @@ public class TilskuddFartoyController {
 
             return linker.toResource(tilskuddfartoy);
         }    
-    }
-
-    @GetMapping("/mappeid/{ar}/{sekvensnummer}")
-    public TilskuddFartoyResource getTilskuddFartoyByMappeArSekvensnummer(
-            @PathVariable String ar,
-            @PathVariable String sekvensnummer,
-            @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
-            @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client) throws InterruptedException {
-        return getTilskuddFartoyByMappeId(ar + "/" + sekvensnummer, orgId, client);
     }
 
     @GetMapping("/mappeid/{id:.+}")
@@ -292,27 +283,27 @@ public class TilskuddFartoyController {
         if (event.getResponseStatus() == null) {
             return ResponseEntity.status(HttpStatus.ACCEPTED).build();
         }
-        List<TilskuddFartoyResource> result;
+        TilskuddFartoyResource result;
         switch (event.getResponseStatus()) {
             case ACCEPTED:
                 if (event.getOperation() == Operation.VALIDATE) {
                     fintAuditService.audit(event, Status.SENT_TO_CLIENT);
                     return ResponseEntity.ok(event.getResponse());
                 }
-                result = objectMapper.convertValue(event.getData(), objectMapper.getTypeFactory().constructCollectionType(List.class, TilskuddFartoyResource.class));
-                URI location = UriComponentsBuilder.fromUriString(linker.getSelfHref(result.get(0))).build().toUri();
+                result = objectMapper.convertValue(event.getData().get(0), TilskuddFartoyResource.class);
+                URI location = UriComponentsBuilder.fromUriString(linker.getSelfHref(result)).build().toUri();
                 event.setMessage(location.toString());
                 fintAuditService.audit(event, Status.SENT_TO_CLIENT);
                 if (props.isUseCreated())
-                    return ResponseEntity.created(location).body(linker.toResource(result.get(0)));
-                return ResponseEntity.status(HttpStatus.SEE_OTHER).location(location).body(linker.toResource(result.get(0)));
+                    return ResponseEntity.created(location).body(linker.toResource(result));
+                return ResponseEntity.status(HttpStatus.SEE_OTHER).location(location).body(linker.toResource(result));
             case ERROR:
                 fintAuditService.audit(event, Status.SENT_TO_CLIENT);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(event.getResponse());
             case CONFLICT:
                 fintAuditService.audit(event, Status.SENT_TO_CLIENT);
-                result = objectMapper.convertValue(event.getData(), objectMapper.getTypeFactory().constructCollectionType(List.class, TilskuddFartoyResource.class));
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(linker.toResources(result));
+                result = objectMapper.convertValue(event.getData().get(0), TilskuddFartoyResource.class);
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(linker.toResource(result));
             case REJECTED:
                 fintAuditService.audit(event, Status.SENT_TO_CLIENT);
                 return ResponseEntity.badRequest().body(event.getResponse());
@@ -332,11 +323,7 @@ public class TilskuddFartoyController {
         linker.mapLinks(body);
         Event event = new Event(orgId, Constants.COMPONENT, KulturminnevernActions.UPDATE_TILSKUDDFARTOY, client);
         event.addObject(objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS).convertValue(body, Map.class));
-        event.setOperation(Operation.CREATE);
-        if (validate) {
-            event.setQuery("VALIDATE");
-            event.setOperation(Operation.VALIDATE);
-        }
+        event.setOperation(validate ? Operation.VALIDATE : Operation.CREATE);
         consumerEventUtil.send(event);
 
         statusCache.put(event.getCorrId(), event);
@@ -368,16 +355,6 @@ public class TilskuddFartoyController {
 
         URI location = UriComponentsBuilder.fromUriString(linker.self()).path("status/{id}").buildAndExpand(event.getCorrId()).toUri();
         return ResponseEntity.status(HttpStatus.ACCEPTED).location(location).build();
-    }
-
-    @PutMapping("/mappeid/{ar}/{sekvensnummer}")
-    public ResponseEntity putTilskuddFartoyByMappeArSekvensnummer(
-            @PathVariable String ar,
-            @PathVariable String sekvensnummer,
-            @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
-            @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client,
-            @RequestBody TilskuddFartoyResource body) {
-        return putTilskuddFartoyByMappeId(ar + "/" + sekvensnummer, orgId, client, body);
     }
 
     @PutMapping("/mappeid/{id:.+}")

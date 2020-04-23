@@ -2,7 +2,8 @@ FROM gradle:4.10.3-jdk8-alpine as builder
 USER root
 COPY . .
 ARG apiVersion
-RUN gradle --no-daemon -PapiVersion=${apiVersion} build
+ARG buildFlags=""
+RUN gradle --no-daemon ${buildFlags} -PapiVersion=${apiVersion} build
 
 FROM gcr.io/distroless/java:8
 ENV JAVA_TOOL_OPTIONS -XX:+ExitOnOutOfMemoryError

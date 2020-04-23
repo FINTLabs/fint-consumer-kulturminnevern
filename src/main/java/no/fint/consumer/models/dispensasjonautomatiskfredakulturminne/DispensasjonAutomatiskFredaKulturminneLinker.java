@@ -8,10 +8,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.util.Objects.isNull;
 import static org.springframework.util.StringUtils.isEmpty;
-
 
 @Component
 public class DispensasjonAutomatiskFredaKulturminneLinker extends FintLinker<DispensasjonAutomatiskFredaKulturminneResource> {
@@ -34,17 +34,23 @@ public class DispensasjonAutomatiskFredaKulturminneLinker extends FintLinker<Dis
 
     @Override
     public String getSelfHref(DispensasjonAutomatiskFredaKulturminneResource dispensasjonautomatiskfredakulturminne) {
+        return getAllSelfHrefs(dispensasjonautomatiskfredakulturminne).findFirst().orElse(null);
+    }
+
+    @Override
+    public Stream<String> getAllSelfHrefs(DispensasjonAutomatiskFredaKulturminneResource dispensasjonautomatiskfredakulturminne) {
+        Stream.Builder<String> builder = Stream.builder();
         if (!isNull(dispensasjonautomatiskfredakulturminne.getSoknadsnummer()) && !isEmpty(dispensasjonautomatiskfredakulturminne.getSoknadsnummer().getIdentifikatorverdi())) {
-            return createHrefWithId(dispensasjonautomatiskfredakulturminne.getSoknadsnummer().getIdentifikatorverdi(), "soknadsnummer");
+            builder.add(createHrefWithId(dispensasjonautomatiskfredakulturminne.getSoknadsnummer().getIdentifikatorverdi(), "soknadsnummer"));
         }
         if (!isNull(dispensasjonautomatiskfredakulturminne.getMappeId()) && !isEmpty(dispensasjonautomatiskfredakulturminne.getMappeId().getIdentifikatorverdi())) {
-            return createHrefWithId(dispensasjonautomatiskfredakulturminne.getMappeId().getIdentifikatorverdi(), "mappeid");
+            builder.add(createHrefWithId(dispensasjonautomatiskfredakulturminne.getMappeId().getIdentifikatorverdi(), "mappeid"));
         }
         if (!isNull(dispensasjonautomatiskfredakulturminne.getSystemId()) && !isEmpty(dispensasjonautomatiskfredakulturminne.getSystemId().getIdentifikatorverdi())) {
-            return createHrefWithId(dispensasjonautomatiskfredakulturminne.getSystemId().getIdentifikatorverdi(), "systemid");
+            builder.add(createHrefWithId(dispensasjonautomatiskfredakulturminne.getSystemId().getIdentifikatorverdi(), "systemid"));
         }
-        
-        return null;
+
+        return builder.build();
     }
 
     int[] hashCodes(DispensasjonAutomatiskFredaKulturminneResource dispensasjonautomatiskfredakulturminne) {
@@ -59,6 +65,21 @@ public class DispensasjonAutomatiskFredaKulturminneLinker extends FintLinker<Dis
             builder.add(dispensasjonautomatiskfredakulturminne.getSystemId().getIdentifikatorverdi().hashCode());
         }
         
+        return builder.build().toArray();
+    }
+
+    int[] hashCodes(DispensasjonAutomatiskFredaKulturminneResource dispensasjonautomatiskfredakulturminne) {
+        IntStream.Builder builder = IntStream.builder();
+        if (!isNull(dispensasjonautomatiskfredakulturminne.getSoknadsnummer()) && !isEmpty(dispensasjonautomatiskfredakulturminne.getSoknadsnummer().getIdentifikatorverdi())) {
+            builder.add(dispensasjonautomatiskfredakulturminne.getSoknadsnummer().getIdentifikatorverdi().hashCode());
+        }
+        if (!isNull(dispensasjonautomatiskfredakulturminne.getMappeId()) && !isEmpty(dispensasjonautomatiskfredakulturminne.getMappeId().getIdentifikatorverdi())) {
+            builder.add(dispensasjonautomatiskfredakulturminne.getMappeId().getIdentifikatorverdi().hashCode());
+        }
+        if (!isNull(dispensasjonautomatiskfredakulturminne.getSystemId()) && !isEmpty(dispensasjonautomatiskfredakulturminne.getSystemId().getIdentifikatorverdi())) {
+            builder.add(dispensasjonautomatiskfredakulturminne.getSystemId().getIdentifikatorverdi().hashCode());
+        }
+
         return builder.build().toArray();
     }
 

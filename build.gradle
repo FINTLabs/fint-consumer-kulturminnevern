@@ -34,17 +34,20 @@ repositories {
 }
 
 dependencies {
-
     compile("no.fint:fint-arkiv-model-java:${apiVersion}")
 
+    compile('no.fint:fint-cache:2.1.0')
+
+    compile('no.fint:fint-audit-azure-eventhub-plugin:0.3.0')
+    compile('io.projectreactor:reactor-core:3.3.2.RELEASE')
+
     compile('no.fint:fint-api-service-discover:1.1.0')
-    compile('no.fint:fint-audit-mongo-plugin:1.6.1')
-    compile('no.fint:fint-cache:2.3.0')
+    compile('no.fint:fint-cache:2.5.0-rc-1')
     compile('no.fint:fint-dependencies:0.0.3')
     compile('no.fint:fint-event-model:3.0.0')
     compile('no.fint:fint-events:2.2.0')
     compile('no.fint:fint-hazelcast:1.2.0-rc-1')
-    compile('no.fint:fint-relations:2.0.0')
+    compile('no.fint:fint-relations:2.1.0-beta-1')
     compile('no.fint:fint-spring-secrets:0.1.0')
 
     compile('com.hazelcast:hazelcast:3.11.2')
@@ -56,7 +59,7 @@ dependencies {
     compile('org.springframework.boot:spring-boot-starter-web')
     runtime('org.springframework.boot:spring-boot-actuator')
 
-    testCompile('no.fint:fint-test-utils:0.0.4')
+    testCompile('no.fint:fint-test-utils:0.0.5')
     testCompile("cglib:cglib-nodep:${cglibVersion}")
     testCompile("org.spockframework:spock-spring:${spockSpringVersion}")
     testCompile("org.spockframework:spock-core:${spockSpringVersion}")

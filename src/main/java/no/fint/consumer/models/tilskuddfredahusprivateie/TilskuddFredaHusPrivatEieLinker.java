@@ -49,7 +49,7 @@ public class TilskuddFredaHusPrivatEieLinker extends FintLinker<TilskuddFredaHus
         if (!isNull(tilskuddfredahusprivateie.getSystemId()) && !isEmpty(tilskuddfredahusprivateie.getSystemId().getIdentifikatorverdi())) {
             builder.add(createHrefWithId(tilskuddfredahusprivateie.getSystemId().getIdentifikatorverdi(), "systemid"));
         }
-        
+
         return builder.build();
     }
 

@@ -1,53 +1,67 @@
 package no.fint.consumer.models.tilskuddfartoy
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import no.fint.audit.FintAuditService
-import no.fint.consumer.config.ConsumerProps
-import no.fint.consumer.event.ConsumerEventUtil
-import no.fint.consumer.status.StatusCache
-import no.fint.model.resource.kultur.kulturminnevern.TilskuddFartoyResource
-import no.fint.test.utils.MockMvcSpecification
-import org.hamcrest.CoreMatchers
+import no.fint.consumer.event.SynchronousEvents
+import no.fint.event.model.Event
+import org.spockframework.spring.SpringBean
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import spock.lang.Specification
+
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.TimeUnit
+
+import static org.hamcrest.CoreMatchers.containsString
+import static org.hamcrest.CoreMatchers.equalTo
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 
 /*
- * This specification asserts that the manually-added mappings for /mappeid/{year}/{sequence}
- * are present.  If the controller is replaced with the generated version, these mappings will
- * be deleted.
- * If you get here due to an unexpected build failure, go back to you Git history and locate the
- * @GetMapping and @PutMapping for /mappeid/{ar}/{sekvensnummer}
+ * This specification asserts that the custom mappings for /mappeid/{year}/{sequence}
+ * are present.
  */
-class TilskuddFartoyControllerSpec extends MockMvcSpecification {
+@SpringBootTest(properties = 'fint.consumer.cache.disabled.tilskuddfartoy=true')
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+class TilskuddFartoyControllerSpec extends Specification {
 
-    private MockMvc mockMvc
-    private TilskuddFartoyCacheService cacheService
-    private TilskuddFartoyController controller
-    private TilskuddFartoyLinker linker
-    private ConsumerProps props
-    private FintAuditService auditService
-    private ConsumerEventUtil consumerEventUtil
-    private StatusCache statusCache
+    @Autowired
+    MockMvc mockMvc
 
-    void setup() {
-        cacheService = Mock()
-        props = Mock()
-        auditService = Mock()
-        linker = Mock()
-        consumerEventUtil = Mock()
-        statusCache = Mock()
-        controller = new TilskuddFartoyController(
-                cacheService: cacheService,
-                linker: linker,
-                props: props,
-                fintAuditService: auditService,
-                consumerEventUtil: consumerEventUtil,
-                statusCache: statusCache,
-                objectMapper: new ObjectMapper())
-        mockMvc = standaloneSetup(controller)
-    }
+    @Autowired
+    ObjectMapper objectMapper
+
+    @SpringBean
+    SynchronousEvents synchronousEvents = Mock()
 
     def "Verify that GET by mappeId works"() {
+        given:
+        def event = objectMapper.readValue('''{
+    "corrId": "aaf3518e-c9b1-4152-a117-d536c166b0bb",
+    "action": "GET_TILSKUDDFARTOY",
+    "operation": "READ",
+    "status": "DOWNSTREAM_QUEUE",
+    "time": 1586843296434,
+    "orgId": "mock.no",
+    "source": "kulturminnevern",
+    "client": "CACHE_SERVICE",
+    "data": [
+        {
+            "mappeId": {
+                "identifikatorverdi": "2020/42"
+            },
+            "fartoyNavn": "Spock"
+        }
+    ],
+    "responseStatus": "ACCEPTED",
+    "query": "mappeId/2020/42"
+}''', Event)
+        def queue = Mock(BlockingQueue)
         when:
         def response = mockMvc.perform(
                 get('/tilskuddfartoy/mappeid/2020/42')
@@ -55,9 +69,9 @@ class TilskuddFartoyControllerSpec extends MockMvcSpecification {
                         .header('x-client', 'Spock'))
 
         then:
-        response.andExpect(status().is2xxSuccessful())
-        1 * cacheService.getTilskuddFartoyByMappeId('test.org', '2020/42') >> Optional.of(new TilskuddFartoyResource())
-        1 * linker.toResource(_ as TilskuddFartoyResource) >> new TilskuddFartoyResource()
+        response.andExpect(status().is2xxSuccessful()).andExpect(jsonPath('$.fartoyNavn').value(equalTo('Spock')))
+        1 * synchronousEvents.register({ it.request.query == 'mappeId/2020/42' }) >> queue
+        1 * queue.poll(5, TimeUnit.MINUTES) >> event
     }
 
     def "Verify that PUT by mappeId works"() {
@@ -73,7 +87,6 @@ class TilskuddFartoyControllerSpec extends MockMvcSpecification {
         then:
         response
                 .andExpect(status().is2xxSuccessful())
-                .andExpect(header().string('Location', CoreMatchers.containsString('/status/')))
-        1 * linker.self() >> '/tilskuddfartoy/'
+                .andExpect(header().string('Location', containsString('/status/')))
     }
 }

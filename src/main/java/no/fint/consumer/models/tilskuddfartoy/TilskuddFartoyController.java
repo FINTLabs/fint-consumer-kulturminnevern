@@ -174,15 +174,6 @@ public class TilskuddFartoyController {
         }    
     }
 
-    @GetMapping("/mappeid/{ar}/{sekvensnummer}")
-    public TilskuddFartoyResource getTilskuddFartoyByMappeArSekvensnummer(
-            @PathVariable String ar,
-            @PathVariable String sekvensnummer,
-            @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
-            @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client) throws InterruptedException {
-        return getTilskuddFartoyByMappeId(ar + "/" + sekvensnummer, orgId, client);
-    }
-
     @GetMapping("/mappeid/{id:.+}")
     public TilskuddFartoyResource getTilskuddFartoyByMappeId(
             @PathVariable String id,
@@ -364,16 +355,6 @@ public class TilskuddFartoyController {
 
         URI location = UriComponentsBuilder.fromUriString(linker.self()).path("status/{id}").buildAndExpand(event.getCorrId()).toUri();
         return ResponseEntity.status(HttpStatus.ACCEPTED).location(location).build();
-    }
-
-    @PutMapping("/mappeid/{ar}/{sekvensnummer}")
-    public ResponseEntity putTilskuddFartoyByMappeArSekvensnummer(
-            @PathVariable String ar,
-            @PathVariable String sekvensnummer,
-            @RequestHeader(name = HeaderConstants.ORG_ID, required = false) String orgId,
-            @RequestHeader(name = HeaderConstants.CLIENT, required = false) String client,
-            @RequestBody TilskuddFartoyResource body) {
-        return putTilskuddFartoyByMappeId(ar + "/" + sekvensnummer, orgId, client, body);
     }
 
     @PutMapping("/mappeid/{id:.+}")

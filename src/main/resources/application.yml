@@ -9,3 +9,6 @@ fint:
         dispensasjonautomatiskfredakulturminne: true
         tilskuddfartoy: true
         tilskuddfredahusprivateie: true
+spring:
+  mvc:
+    logResolvedException: false

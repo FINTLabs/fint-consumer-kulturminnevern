@@ -49,7 +49,7 @@ public class TilskuddFartoyLinker extends FintLinker<TilskuddFartoyResource> {
         if (!isNull(tilskuddfartoy.getSystemId()) && !isEmpty(tilskuddfartoy.getSystemId().getIdentifikatorverdi())) {
             builder.add(createHrefWithId(tilskuddfartoy.getSystemId().getIdentifikatorverdi(), "systemid"));
         }
-
+        
         return builder.build();
     }
 

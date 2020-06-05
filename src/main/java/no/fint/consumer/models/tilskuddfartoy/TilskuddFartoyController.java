@@ -356,7 +356,7 @@ public class TilskuddFartoyController {
         URI location = UriComponentsBuilder.fromUriString(linker.self()).path("status/{id}").buildAndExpand(event.getCorrId()).toUri();
         return ResponseEntity.status(HttpStatus.ACCEPTED).location(location).build();
     }
-
+  
     @PutMapping("/mappeid/{id:.+}")
     public ResponseEntity putTilskuddFartoyByMappeId(
             @PathVariable String id,

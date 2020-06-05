@@ -49,7 +49,7 @@ public class DispensasjonAutomatiskFredaKulturminneLinker extends FintLinker<Dis
         if (!isNull(dispensasjonautomatiskfredakulturminne.getSystemId()) && !isEmpty(dispensasjonautomatiskfredakulturminne.getSystemId().getIdentifikatorverdi())) {
             builder.add(createHrefWithId(dispensasjonautomatiskfredakulturminne.getSystemId().getIdentifikatorverdi(), "systemid"));
         }
-
+        
         return builder.build();
     }
 

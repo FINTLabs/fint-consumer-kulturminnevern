@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 import lombok.extern.slf4j.Slf4j;
 
-import no.fint.cache.Cache;
 import no.fint.cache.CacheService;
 import no.fint.cache.model.CacheObject;
 import no.fint.consumer.config.Constants;
@@ -146,8 +145,7 @@ public class TilskuddFredaHusPrivatEieCacheService extends CacheService<Tilskudd
                     .map(i -> new CacheObject<>(i, linker.hashCodes(i)))
                     .collect(Collectors.toList());
             updateCache(event.getOrgId(), cacheObjects);
-            final Long volume = getCache(event.getOrgId()).map(Cache::volume).orElse(0L) >> 20;
-            log.info("Updated cache for {} with {} cache objects ({} MiB)", event.getOrgId(), cacheObjects.size(), volume);
+            log.info("Updated cache for {} with {} cache objects", event.getOrgId(), cacheObjects.size());
         }
     }
 }
